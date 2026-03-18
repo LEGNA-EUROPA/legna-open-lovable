@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firecrawlClone } from '@/lib/scrapers';
+import { scrape, getScraperProvider } from '@/lib/scrapers';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[scrape-opencode] Scraping URL: ${url}`);
 
-    const result = await firecrawlClone.scrapeWithFallback(url, {
+    const result = await scrape(url, {
       formats: formats || ['markdown', 'html', 'screenshot'],
       onlyMainContent: onlyMainContent !== false,
       waitFor: waitFor || 2000,
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      provider: result.provider,
       data: result.data,
     });
 
@@ -71,10 +72,20 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  const provider = getScraperProvider();
+
   return NextResponse.json({
-    name: 'OpenCode Scraper',
+    name: 'Scraper API',
     version: '1.0.0',
-    description: 'A Firecrawl-like web scraper powered by Playwright',
+    description: 'Web scraping API with configurable provider',
+    currentProvider: provider,
+    providers: {
+      opencode: 'Playwright-based scraper (default, free)',
+      firecrawl: 'Firecrawl API (requires FIRECRAWL_API_KEY)'
+    },
+    configuration: {
+      SCRAPER_PROVIDER: `Environment variable to switch provider (current: ${process.env.SCRAPER_PROVIDER || 'not set (defaults to opencode)'})`
+    },
     endpoints: {
       POST: {
         description: 'Scrape a URL and extract content',
@@ -86,21 +97,6 @@ export async function GET() {
           timeout: 'number (optional) - Request timeout (ms)',
           fullPage: 'boolean (optional) - Capture full page screenshot',
         },
-      },
-    },
-    examples: {
-      basic: {
-        url: 'https://example.com',
-      },
-      withScreenshot: {
-        url: 'https://example.com',
-        formats: ['markdown', 'html', 'screenshot'],
-      },
-      fullPage: {
-        url: 'https://example.com',
-        formats: ['markdown', 'screenshot'],
-        fullPage: true,
-        waitFor: 3000,
       },
     },
   });

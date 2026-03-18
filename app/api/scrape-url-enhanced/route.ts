@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Function to sanitize smart quotes and other problematic characters
-function sanitizeQuotes(text: string): string {
-  return text
-    // Replace smart single quotes
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-    // Replace smart double quotes
-    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
-    // Replace other quote-like characters
-    .replace(/[\u00AB\u00BB]/g, '"') // Guillemets
-    .replace(/[\u2039\u203A]/g, "'") // Single guillemets
-    // Replace other problematic characters
-    .replace(/[\u2013\u2014]/g, '-') // En dash and em dash
-    .replace(/[\u2026]/g, '...') // Ellipsis
-    .replace(/[\u00A0]/g, ' '); // Non-breaking space
-}
+import { scrape } from '@/lib/scrapers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,96 +12,53 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    console.log('[scrape-url-enhanced] Scraping with Firecrawl:', url);
+    console.log('[scrape-url-enhanced] Scraping URL:', url);
     
-    const FIRECRAWL_API_KEY = process.env.FIRECRAWL_API_KEY;
-    if (!FIRECRAWL_API_KEY) {
-      throw new Error('FIRECRAWL_API_KEY environment variable is not set');
-    }
-    
-    // Make request to Firecrawl API with maxAge for 500% faster scraping
-    const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${FIRECRAWL_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        url,
-        formats: ['markdown', 'html', 'screenshot'],
-        waitFor: 3000,
-        timeout: 30000,
-        blockAds: true,
-        maxAge: 3600000, // Use cached data if less than 1 hour old (500% faster!)
-        actions: [
-          {
-            type: 'wait',
-            milliseconds: 2000
-          },
-          {
-            type: 'screenshot',
-            fullPage: false // Just visible viewport for performance
-          }
-        ]
-      })
+    const result = await scrape(url, {
+      formats: ['markdown', 'html', 'screenshot'],
+      waitFor: 2000,
+      timeout: 30000,
     });
-    
-    if (!firecrawlResponse.ok) {
-      const error = await firecrawlResponse.text();
-      throw new Error(`Firecrawl API error: ${error}`);
+
+    if (!result.success) {
+      return NextResponse.json({
+        success: false,
+        error: result.error || 'Failed to scrape URL',
+        provider: result.provider,
+      }, { status: 500 });
     }
-    
-    const data = await firecrawlResponse.json();
-    
-    if (!data.success || !data.data) {
-      throw new Error('Failed to scrape content');
-    }
-    
-    const { markdown, metadata, screenshot, actions } = data.data;
-    // html available but not used in current implementation
-    
-    // Get screenshot from either direct field or actions result
-    const screenshotUrl = screenshot || actions?.screenshots?.[0] || null;
-    
-    // Sanitize the markdown content
-    const sanitizedMarkdown = sanitizeQuotes(markdown || '');
-    
-    // Extract structured data from the response
-    const title = metadata?.title || '';
-    const description = metadata?.description || '';
-    
-    // Format content for AI
+
     const formattedContent = `
-Title: ${sanitizeQuotes(title)}
-Description: ${sanitizeQuotes(description)}
+Title: ${result.data?.title || ''}
+Description: ${result.data?.description || ''}
 URL: ${url}
 
 Main Content:
-${sanitizedMarkdown}
+${result.data?.markdown || ''}
     `.trim();
     
     return NextResponse.json({
       success: true,
       url,
+      provider: result.provider,
       content: formattedContent,
-      screenshot: screenshotUrl,
+      screenshot: result.data?.screenshot,
       structured: {
-        title: sanitizeQuotes(title),
-        description: sanitizeQuotes(description),
-        content: sanitizedMarkdown,
+        title: result.data?.title,
+        description: result.data?.description,
+        content: result.data?.markdown,
         url,
-        screenshot: screenshotUrl
+        screenshot: result.data?.screenshot
       },
       metadata: {
-        scraper: 'firecrawl-enhanced',
+        scraper: result.provider,
         timestamp: new Date().toISOString(),
         contentLength: formattedContent.length,
-        cached: data.data.cached || false, // Indicates if data came from cache
-        ...metadata
+        ...result.data?.metadata
       },
-      message: 'URL scraped successfully with Firecrawl (with caching for 500% faster performance)'
+      message: `URL scraped successfully with ${result.provider}`
     });
-    
+
   } catch (error) {
     console.error('[scrape-url-enhanced] Error:', error);
     return NextResponse.json({

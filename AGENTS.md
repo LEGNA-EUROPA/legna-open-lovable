@@ -137,18 +137,53 @@ export async function POST(request: NextRequest) {
 - **UI**: Radix UI, Framer Motion, Lucide React
 - **IA**: Vercel AI SDK, Anthropic, OpenAI, Google, Groq
 - **Sandbox**: E2B Code Interpreter, Vercel Sandbox
+- **Scraping**: Playwright (nuestro scraper), Cheerio, Firecrawl (opcional)
 - **Datos**: Zod (validación), jotai (estado)
 - **Estilos**: Tailwind CSS 3.4, class-variance-authority
+
+### Sistema de Scraping
+El proyecto tiene un sistema de scraping configurable que soporta múltiples proveedores:
+
+#### Proveedores disponibles:
+| Proveedor | Descripción | Costo |
+|-----------|-------------|-------|
+| `opencode` | Playwright-based (default) | Gratis |
+| `firecrawl` | API de Firecrawl | $15+/mes |
+
+#### Configuración:
+```env
+SCRAPER_PROVIDER=opencode  # Valor por defecto
+```
+
+#### API de Scraping:
+```typescript
+// lib/scrapers/index.ts exports
+import { scrape, getScraperProvider } from '@/lib/scrapers';
+
+// Uso
+const result = await scrape(url, {
+  formats: ['markdown', 'html', 'screenshot'],
+  waitFor: 2000,
+});
+// result.provider = 'opencode' | 'firecrawl'
+```
+
+#### Endpoints:
+- `POST /api/scrape-opencode` - Scraper principal
+- `POST /api/scrape-website` - Alias compatible
+- `POST /api/scrape-url-enhanced` - Con formato optimizado para IA
+- `POST /api/scrape-screenshot` - Solo screenshot
 
 ### Pruebas
 Las pruebas son scripts JavaScript plain usando módulos nativos de Node.js. Se pueden ejecutar directamente con `node`.
 
 ### Variables de Entorno
 Requeridas:
-- `FIRECRAWL_API_KEY` - Scraping de sitios web
 - Clave de Proveedor de IA (una de): `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`
 
 Opcionales:
+- `SCRAPER_PROVIDER` - Proveedor de scraping (`opencode` default, `firecrawl` para sitios difíciles)
+- `FIRECRAWL_API_KEY` - Solo si usas `SCRAPER_PROVIDER=firecrawl`
 - `MORPH_API_KEY` - Modo de aplicación rápida
 - `E2B_API_KEY` - Proveedor de sandbox alternativo
 - `AI_GATEWAY_API_KEY` - Vercel AI Gateway

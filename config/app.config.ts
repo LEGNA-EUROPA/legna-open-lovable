@@ -180,6 +180,36 @@ export const appConfig = {
     
     // Request timeout (milliseconds)
     requestTimeout: 30000,
+  },
+
+  // Scraper Configuration
+  scraper: {
+    // Scraper provider: 'opencode' (default, free) or 'firecrawl' (paid)
+    provider: process.env.SCRAPER_PROVIDER || 'opencode',
+    
+    // OpenCode Scraper (Playwright-based)
+    opencode: {
+      // Default wait time for JS rendering (milliseconds)
+      defaultWaitFor: 2000,
+      
+      // Request timeout (milliseconds)
+      timeout: 30000,
+      
+      // Cache max age in milliseconds (1 hour)
+      cacheMaxAge: 3600000,
+    },
+    
+    // Firecrawl Scraper
+    firecrawl: {
+      // API base URL
+      apiUrl: 'https://api.firecrawl.dev/v1/scrape',
+      
+      // Default formats to request
+      defaultFormats: ['markdown', 'html', 'screenshot'],
+      
+      // Cache max age in milliseconds (1 hour)
+      cacheMaxAge: 3600000,
+    },
   }
 };
 
