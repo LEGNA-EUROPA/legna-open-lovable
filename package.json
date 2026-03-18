@@ -1,5 +1,5 @@
 {
-  "name": "open-lovable",
+  "name": "legna-open-lovable",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -53,6 +53,7 @@
     "@vercel/sandbox": "^0.0.17",
     "ai": "^5.0.0",
     "autoprefixer": "^10.4.21",
+    "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
@@ -69,6 +70,7 @@
     "next": "15.4.3",
     "next-themes": "^0.4.6",
     "pixi.js": "^8.13.1",
+    "playwright": "^1.58.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
@@ -83,6 +85,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/cheerio": "^1.0.0",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^20",
     "@types/react": "^19",

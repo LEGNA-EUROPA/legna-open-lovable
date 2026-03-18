@@ -1,0 +1,43 @@
+{
+  "name": "@open-lovable/firecrawl-opencode",
+  "version": "1.0.0",
+  "description": "A Firecrawl-like web scraper powered by Playwright and opencode",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "test": "node tests/run.js"
+  },
+  "keywords": [
+    "scraper",
+    "web-scraping",
+    "playwright",
+    "firecrawl-alternative",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "playwright": ">=1.40.0",
+    "cheerio": ">=1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tsup": "^8.0.0"
+  }
+}
